@@ -1,0 +1,15 @@
+Agentic Data Sanitizer API
+
+This API provides autonomous data formatting and sanitation for raw CSV files (specifically handling electrical grid data, load forecasting datasets, and sensor logs).
+
+It normalizes timestamps, interpolates missing values, removes extreme outliers, and outputs a strict, schema-compliant JSON array optimized for LLM ingestion and mathematical modeling.
+
+Usage
+
+Send an HTTP POST request to /sanitize-csv containing a raw .csv file upload.
+
+Payment Protocol
+
+This API implements the x402 protocol (Agentic Commerce). Execution requires a 0.05 USDC micro-transaction on the Base network (eip155:8453).
+
+Unauthenticated requests will immediately return an HTTP 402 Payment Required response containing the EVM payment intent and facilitator details.
