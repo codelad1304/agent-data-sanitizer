@@ -4,9 +4,10 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 # Import the x402 Agentic Payment Middleware
-from x402.fastapi import x402Middleware
-from x402.mechanisms.evm.exact.server import ExactEvmScheme
-from x402.clients.http import HTTPFacilitatorClient
+# Change these lines in main.py:
+from x402.http.middleware.fastapi import PaymentMiddlewareASGI as x402Middleware
+from x402.mechanisms.evm.exact.server import ExactEvmServerScheme as ExactEvmScheme
+from x402.http import HTTPFacilitatorClient
 
 app = FastAPI(title="Agentic Data Sanitizer API")
 
