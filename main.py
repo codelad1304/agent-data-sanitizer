@@ -30,8 +30,8 @@ facilitator_client = HTTPFacilitatorClient(
     )
 )
 
-# Wrap it in the ResourceServer as required by the middleware
-server = x402ResourceServer(facilitator_client=facilitator_client)
+# Wrap it in the ResourceServer as required by the middleware, using the plural 'facilitator_clients'
+server = x402ResourceServer(facilitator_clients=[facilitator_client])
 
 # --- 3. Apply the Middleware ---
 app.add_middleware(
