@@ -30,8 +30,9 @@ facilitator_client = HTTPFacilitatorClient(
     )
 )
 
-# Wrap it in the ResourceServer as required by the middleware, using the plural 'facilitator_clients'
+# Initialize the ResourceServer and register the scheme here
 server = x402ResourceServer(facilitator_clients=[facilitator_client])
+server.register("eip155:8453", ExactEvmScheme())
 
 # --- 3. Apply the Middleware ---
 app.add_middleware(
@@ -46,8 +47,7 @@ app.add_middleware(
             }
         }
     },
-    server=server, 
-    schemes=[ExactEvmScheme()]
+    server=server
 )
 
 @app.post("/sanitize-csv")
