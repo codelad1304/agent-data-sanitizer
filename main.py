@@ -26,13 +26,13 @@ MY_WALLET_ADDRESS = os.getenv("MY_WALLET_ADDRESS", "0xYourEthereumOrBaseAddressH
 # The SDK automatically discovers CDP_API_KEY_NAME and CDP_API_KEY_PRIVATE_KEY from environment variables
 facilitator_client = HTTPFacilitatorClient(
     config=FacilitatorConfig(
-        url="https://x402.org/facilitator"
+        url="https://api.cdp.coinbase.com/platform/v2/x402"
     )
 )
 
 # Initialize the ResourceServer and register the scheme here
 server = x402ResourceServer(facilitator_clients=[facilitator_client])
-server.register("eip155:84532", ExactEvmScheme())
+server.register("eip155:8453", ExactEvmScheme())
 
 # --- 3. Apply the Middleware ---
 app.add_middleware(
@@ -42,7 +42,7 @@ app.add_middleware(
             "accepts": {
                 "scheme": "exact", 
                 "price": "0.05", 
-                "network": "eip155:84532", 
+                "network": "eip155:8453", 
                 "payTo": MY_WALLET_ADDRESS
             }
         }
