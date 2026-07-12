@@ -13,18 +13,35 @@ from x402.http import HTTPFacilitatorClient, FacilitatorConfig
 from x402.server import x402ResourceServer
 
 app = FastAPI(title="Agentic Data Sanitizer API")
-# ==========================================
-# PLACE THE NEW JWT GENERATION LOGIC HERE
+
 # ==========================================
 # 1. Grab keys from the Render environment
 key_name = os.environ.get("CDP_API_KEY_ID")
 key_secret = os.environ.get("CDP_API_KEY_SECRET")
 
-# 2. Generate the explicit JWT for the startup check
-startup_jwt = generate_jwt(JwtOptions(
-    api_key_id=key_name,
-    api_key_secret=key_secret
-))
+# 2. Guard against missing variables during Render's build phase
+if key_name and key_secret:
+    startup_jwt = generate_jwt(JwtOptions(
+        api_key_id=key_name,
+        api_key_secret=key_secret
+    ))
+    
+    # Use standard httpx.Client, NOT httpx.AsyncClient
+    custom_client = httpx.Client(
+        headers={"Authorization": f"Bearer {startup_jwt}"}
+    )
+    
+    facilitator_client = HTTPFacilitatorClient(
+        config=FacilitatorConfig(url="https://api.cdp.coinbase.com/platform/v2/x402"),
+        client=custom_client
+    )
+else:
+    # Fallback to prevent crash if Render scans the file without env vars
+    print("WARNING: CDP API Keys not found in environment!")
+    facilitator_client = HTTPFacilitatorClient(
+        config=FacilitatorConfig(url="https://api.cdp.coinbase.com/platform/v2/x402")
+    )
+# ==========================================
 
 # --- 1. Root Health Check Route ---
 @app.get("/")
@@ -36,20 +53,7 @@ class AgentRequest(BaseModel):
 
 MY_WALLET_ADDRESS = os.getenv("MY_WALLET_ADDRESS", "0xYourEthereumOrBaseAddressHere")
 
-custom_client = httpx.AsyncClient(
-    headers={"Authorization": f"Bearer {startup_jwt}"}
-)
-
 # --- 2. Initialize Client and Server ---
-# The SDK automatically discovers CDP_API_KEY_NAME and CDP_API_KEY_PRIVATE_KEY from environment variables
-facilitator_client = HTTPFacilitatorClient(
-    config=FacilitatorConfig(
-        url="https://api.cdp.coinbase.com/platform/v2/x402"
-        ),
-    client=custom_client
-)
-
-# Initialize the ResourceServer and register the scheme here
 server = x402ResourceServer(facilitator_clients=[facilitator_client])
 server.register("eip155:8453", ExactEvmScheme())
 
@@ -74,7 +78,6 @@ async def sanitize_csv(request: AgentRequest):
     try:
         csv_file = io.StringIO(request.raw_csv_text)
         reader = csv.DictReader(csv_file)
-        # Process data
         cleaned_data = [row for row in reader] 
         
         return {
