@@ -1,11 +1,12 @@
 import csv
 import io
 import os
+import asyncio
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-# Official Coinbase & x402 Imports
-from cdp import Cdp
+# Official modern Coinbase SDK & x402 Imports
+from cdp import CdpClient  # Fixed the modern import name
 from x402.http.middleware.fastapi import PaymentMiddlewareASGI as x402Middleware
 from x402.mechanisms.evm.exact.server import ExactEvmScheme
 from x402.http import HTTPFacilitatorClient, FacilitatorConfig
@@ -13,24 +14,10 @@ from x402.server import x402ResourceServer
 
 app = FastAPI(title="Agentic Data Sanitizer API")
 
-# ==========================================
-# 1. Official CDP Authentication Setup
-# ==========================================
-key_name = os.environ.get("CDP_API_KEY_NAME")
-key_secret = os.environ.get("CDP_API_KEY_PRIVATE_KEY")
-
-if key_name and key_secret:
-    print("✅ Configuring CDP SDK globally...")
-    # This officially handles the rotating 2-minute JWTs for all Coinbase services!
-    Cdp.configure(key_name, key_secret)
-else:
-    print("WARNING: CDP API Keys not found in environment!")
-
-# 2. Initialize the facilitator cleanly
+# Initialize the facilitator cleanly (CdpClient will handle authentication under the hood)
 facilitator_client = HTTPFacilitatorClient(
     config=FacilitatorConfig(url="https://api.cdp.coinbase.com/platform/v2/x402")
 )
-# ==========================================
 
 # --- 1. Root Health Check Route ---
 @app.get("/")
