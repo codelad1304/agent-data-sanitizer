@@ -1,12 +1,10 @@
 import csv
 import io
 import os
-import asyncio
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-# Official modern Coinbase SDK & x402 Imports
-from cdp import CdpClient  # Fixed the modern import name
+# Core open-source x402 Imports (No proprietary wrappers required)
 from x402.http.middleware.fastapi import PaymentMiddlewareASGI as x402Middleware
 from x402.mechanisms.evm.exact.server import ExactEvmScheme
 from x402.http import HTTPFacilitatorClient, FacilitatorConfig
@@ -14,9 +12,9 @@ from x402.server import x402ResourceServer
 
 app = FastAPI(title="Agentic Data Sanitizer API")
 
-# Initialize the facilitator cleanly (CdpClient will handle authentication under the hood)
+# Initialize the facilitator using the open, signup-free public protocol network
 facilitator_client = HTTPFacilitatorClient(
-    config=FacilitatorConfig(url="https://api.cdp.coinbase.com/platform/v2/x402")
+    config=FacilitatorConfig(url="https://x402.org/facilitator")
 )
 
 # --- 1. Root Health Check Route ---
@@ -27,9 +25,10 @@ async def root():
 class AgentRequest(BaseModel):
     raw_csv_text: str = Field(..., description="The raw, unformatted CSV text data.")
 
+# Pull your real wallet address securely from the Render environment
 MY_WALLET_ADDRESS = os.getenv("MY_WALLET_ADDRESS", "0xYourEthereumOrBaseAddressHere")
 
-# --- 2. Initialize Server ---
+# --- 2. Initialize Resource Server ---
 server = x402ResourceServer(facilitator_clients=[facilitator_client])
 server.register("eip155:8453", ExactEvmScheme())
 
