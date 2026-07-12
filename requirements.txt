@@ -1,6 +1,4 @@
 fastapi
 uvicorn
-python-multipart
-# Add the EVM extra dependencies here:
-x402[evm]
 pydantic
+x402[evm,fastapi,httpx]
