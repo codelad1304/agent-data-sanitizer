@@ -1,4 +1,4 @@
 fastapi
 uvicorn
 python-multipart
-x402[fastapi]
+x402
