@@ -4,5 +4,5 @@ python-multipart
 # Add the EVM extra dependencies here:
 x402[evm]
 httpx
-coinbase-sdk
+cdp-sdk
 pydantic
