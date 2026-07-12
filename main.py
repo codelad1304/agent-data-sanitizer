@@ -16,8 +16,8 @@ app = FastAPI(title="Agentic Data Sanitizer API")
 # PLACE THE NEW JWT GENERATION LOGIC HERE
 # ==========================================
 # 1. Grab keys from the Render environment
-key_name = os.environ.get("CDP_API_KEY_NAME")
-key_secret = os.environ.get("CDP_API_KEY_PRIVATE_KEY")
+key_name = os.environ.get("CDP_API_KEY_ID")
+key_secret = os.environ.get("CDP_API_KEY_SECRET")
 
 # 2. Generate the explicit JWT for the startup check
 startup_jwt = generate_jwt(JwtOptions(
