@@ -14,7 +14,7 @@ app = FastAPI(title="Agentic Data Sanitizer API")
 
 # Initialize the facilitator using the open, signup-free public protocol network
 facilitator_client = HTTPFacilitatorClient(
-    config=FacilitatorConfig(url="https://x402.org/facilitator")
+    config=FacilitatorConfig(url="https://facilitator.payai.network")
 )
 
 # --- 1. Root Health Check Route ---
