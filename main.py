@@ -1,63 +1,32 @@
 import csv
 import io
 import os
-import httpx
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-# Corrected imports for the modern x402 SDK
+# Official Coinbase & x402 Imports
+from cdp import Cdp
 from x402.http.middleware.fastapi import PaymentMiddlewareASGI as x402Middleware
 from x402.mechanisms.evm.exact.server import ExactEvmScheme
-from cdp.auth.utils.jwt import generate_jwt, JwtOptions
 from x402.http import HTTPFacilitatorClient, FacilitatorConfig
 from x402.server import x402ResourceServer
 
 app = FastAPI(title="Agentic Data Sanitizer API")
 
 # ==========================================
-# DYNAMIC JWT INJECTION VIA HTTPX PATCH
+# 1. Official CDP Authentication Setup
 # ==========================================
-key_name = os.environ.get("CDP_API_KEY_ID")
-key_secret = os.environ.get("CDP_API_KEY_SECRET")
+key_name = os.environ.get("CDP_API_KEY_NAME")
+key_secret = os.environ.get("CDP_API_KEY_PRIVATE_KEY")
 
 if key_name and key_secret:
-    # 1. Save the original httpx request methods
-    original_async_request = httpx.AsyncClient.request
-    original_sync_request = httpx.Client.request
-
-    # 2. Create a helper to dynamically generate fresh JWTs
-    def inject_cdp_auth(kwargs):
-        # Generates a fresh token valid for the next 2 minutes
-        fresh_jwt = generate_jwt(JwtOptions(
-            api_key_id=key_name,
-            api_key_secret=key_secret
-        ))
-        # Safely extract and update headers
-        headers = dict(kwargs.get("headers") or {})
-        headers["Authorization"] = f"Bearer {fresh_jwt}"
-        kwargs["headers"] = headers
-        return kwargs
-
-    # 3. Intercept Async requests
-    async def patched_async_request(self, method, url, **kwargs):
-        if "api.cdp.coinbase.com" in str(url):
-            kwargs = inject_cdp_auth(kwargs)
-        return await original_async_request(self, method, url, **kwargs)
-
-    # 4. Intercept Sync requests
-    def patched_sync_request(self, method, url, **kwargs):
-        if "api.cdp.coinbase.com" in str(url):
-            kwargs = inject_cdp_auth(kwargs)
-        return original_sync_request(self, method, url, **kwargs)
-
-    # 5. Apply the patches globally
-    httpx.AsyncClient.request = patched_async_request
-    httpx.Client.request = patched_sync_request
-    print("✅ HTTPX Patched: Dynamically injecting fresh CDP JWTs.")
+    print("✅ Configuring CDP SDK globally...")
+    # This officially handles the rotating 2-minute JWTs for all Coinbase services!
+    Cdp.configure(key_name, key_secret)
 else:
     print("WARNING: CDP API Keys not found in environment!")
 
-# 6. Initialize the facilitator normally (it will use the patched httpx internally)
+# 2. Initialize the facilitator cleanly
 facilitator_client = HTTPFacilitatorClient(
     config=FacilitatorConfig(url="https://api.cdp.coinbase.com/platform/v2/x402")
 )
