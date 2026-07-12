@@ -32,7 +32,7 @@ facilitator_client = HTTPFacilitatorClient(
 
 # Initialize the ResourceServer and register the scheme here
 server = x402ResourceServer(facilitator_clients=[facilitator_client])
-server.register("eip155:8453", ExactEvmScheme())
+server.register("eip155:84532", ExactEvmScheme())
 
 # --- 3. Apply the Middleware ---
 app.add_middleware(
@@ -42,7 +42,7 @@ app.add_middleware(
             "accepts": {
                 "scheme": "exact", 
                 "price": "0.05", 
-                "network": "eip155:8453", 
+                "network": "eip155:84532", 
                 "payTo": MY_WALLET_ADDRESS
             }
         }
