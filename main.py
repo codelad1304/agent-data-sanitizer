@@ -23,12 +23,10 @@ class AgentRequest(BaseModel):
 MY_WALLET_ADDRESS = os.getenv("MY_WALLET_ADDRESS", "0xYourEthereumOrBaseAddressHere")
 
 # --- 2. Initialize Client and Server ---
-# Create the facilitator client
+# The SDK automatically discovers CDP_API_KEY_NAME and CDP_API_KEY_PRIVATE_KEY from environment variables
 facilitator_client = HTTPFacilitatorClient(
     config=FacilitatorConfig(
-        url="https://api.cdp.coinbase.com/platform/v2/x402",
-        api_key_id=os.getenv("CDP_API_KEY_ID"),
-        api_key_secret=os.getenv("CDP_API_KEY_SECRET")
+        url="https://api.cdp.coinbase.com/platform/v2/x402"
     )
 )
 
@@ -48,7 +46,7 @@ app.add_middleware(
             }
         }
     },
-    server=server, # Pass the server object, not the client directly
+    server=server, 
     schemes=[ExactEvmScheme()]
 )
 
@@ -57,10 +55,12 @@ async def sanitize_csv(request: AgentRequest):
     try:
         csv_file = io.StringIO(request.raw_csv_text)
         reader = csv.DictReader(csv_file)
+        # Process data
         cleaned_data = [row for row in reader] 
         
         return {
             "status": "success",
+            "records_processed": len(cleaned_data),
             "data": cleaned_data
         }
     except Exception as e:
