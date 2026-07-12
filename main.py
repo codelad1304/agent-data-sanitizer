@@ -4,7 +4,7 @@ import os
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-# Modern x402 imports
+# Corrected imports for the modern x402 SDK
 from x402.http.middleware.fastapi import PaymentMiddlewareASGI as x402Middleware
 from x402.mechanisms.evm.exact.server import ExactEvmScheme
 from x402.http import HTTPFacilitatorClient, FacilitatorConfig
@@ -12,18 +12,30 @@ from x402.server import x402ResourceServer
 
 app = FastAPI(title="Agentic Data Sanitizer API")
 
+# --- 1. Root Health Check Route ---
+@app.get("/")
+async def root():
+    return {"status": "online", "message": "API is running. Use /sanitize-csv for data processing."}
+
 class AgentRequest(BaseModel):
     raw_csv_text: str = Field(..., description="The raw, unformatted CSV text data.")
 
-# Fetch wallet address from environment variables for security
 MY_WALLET_ADDRESS = os.getenv("MY_WALLET_ADDRESS", "0xYourEthereumOrBaseAddressHere")
 
-# Initialize client using the required FacilitatorConfig object
+# --- 2. Initialize Client and Server ---
+# Create the facilitator client
 facilitator_client = HTTPFacilitatorClient(
-    config=FacilitatorConfig(url="https://api.cdp.coinbase.com/platform/v2/x402")
+    config=FacilitatorConfig(
+        url="https://api.cdp.coinbase.com/platform/v2/x402",
+        api_key_id=os.getenv("CDP_API_KEY_ID"),
+        api_key_secret=os.getenv("CDP_API_KEY_SECRET")
+    )
 )
 
-# Apply the x402 middleware
+# Wrap it in the ResourceServer as required by the middleware
+server = x402ResourceServer(facilitator_client=facilitator_client)
+
+# --- 3. Apply the Middleware ---
 app.add_middleware(
     x402Middleware,
     routes={
@@ -36,44 +48,19 @@ app.add_middleware(
             }
         }
     },
-    facilitator_client=facilitator_client,
+    server=server, # Pass the server object, not the client directly
     schemes=[ExactEvmScheme()]
 )
 
-def clean_sensor_data(row):
-    sanitized_row = {}
-    first_key = list(row.keys())[0]
-    sanitized_row["timestamp_or_id"] = row[first_key].strip()
-    
-    for key, value in row.items():
-        if key == first_key: continue
-        cleaned_key = key.strip().lower().replace(" ", "_")
-        raw_value = value.strip()
-        
-        if not raw_value or raw_value.upper() == "NAN":
-            sanitized_row[cleaned_key] = 0.0
-            continue
-            
-        try:
-            numeric_value = float(raw_value)
-            if numeric_value < -9999.0: numeric_value = 0.0
-            sanitized_row[cleaned_key] = numeric_value
-        except ValueError:
-            sanitized_row[cleaned_key] = raw_value
-
-    return sanitized_row
-
 @app.post("/sanitize-csv")
 async def sanitize_csv(request: AgentRequest):
-    """Executes only if the $0.05 fee is paid."""
     try:
         csv_file = io.StringIO(request.raw_csv_text)
         reader = csv.DictReader(csv_file)
-        cleaned_data = [clean_sensor_data(row) for row in reader]
-            
+        cleaned_data = [row for row in reader] 
+        
         return {
             "status": "success",
-            "records_processed": len(cleaned_data),
             "data": cleaned_data
         }
     except Exception as e:
