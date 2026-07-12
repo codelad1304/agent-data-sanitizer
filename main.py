@@ -26,7 +26,7 @@ async def get_mcp_schema():
     }
 
 # --- PHASE 3: THE GATEKEEPER (x402 PAYMENT MIDDLEWARE) ---
-MY_WALLET_ADDRESS = "0xYourEthereumOrBaseAddressHere"
+MY_WALLET_ADDRESS = "0x6E1C4B145F8a41B22e6cf03BF615d0D73A9989A1"
 facilitator_client = HTTPFacilitatorClient(url="https://api.cdp.coinbase.com/platform/v2/x402")
 
 app.add_middleware(
