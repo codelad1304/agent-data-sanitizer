@@ -26,7 +26,7 @@ MY_WALLET_ADDRESS = os.getenv("MY_WALLET_ADDRESS", "0xYourEthereumOrBaseAddressH
 # The SDK automatically discovers CDP_API_KEY_NAME and CDP_API_KEY_PRIVATE_KEY from environment variables
 facilitator_client = HTTPFacilitatorClient(
     config=FacilitatorConfig(
-        url="https://api.cdp.coinbase.com/platform/v2/x402"
+        url="https://x402.org/facilitator"
     )
 )
 
