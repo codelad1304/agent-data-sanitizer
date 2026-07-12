@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from x402.http.middleware.fastapi import PaymentMiddlewareASGI as x402Middleware
 from x402.mechanisms.evm.exact.server import ExactEvmScheme
 from x402.http import HTTPFacilitatorClient, FacilitatorConfig
+from x402.server import x402ResourceServer
 
 app = FastAPI(title="Agentic Data Sanitizer API")
 
