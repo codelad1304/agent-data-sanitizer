@@ -1,41 +1,44 @@
 import csv
 import io
+import os
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-# Updated import paths for the x402 middleware
+# Modern x402 imports
 from x402.http.middleware.fastapi import PaymentMiddlewareASGI as x402Middleware
 from x402.mechanisms.evm.exact.server import ExactEvmScheme
-from x402.http import HTTPFacilitatorClient
+from x402.http import HTTPFacilitatorClient, FacilitatorConfig
 
 app = FastAPI(title="Agentic Data Sanitizer API")
 
-# --- PHASE 2: PYDANTIC DATA MODEL ---
 class AgentRequest(BaseModel):
     raw_csv_text: str = Field(..., description="The raw, unformatted CSV text data.")
 
-# --- PHASE 2: MCP SCHEMA DISCOVERY ---
-@app.get("/mcp-schema")
-async def get_mcp_schema():
-    """AI Agents hit this endpoint to read your tool's exact capabilities."""
-    return {
-        "name": "sanitize_electrical_csv",
-        "description": "Takes raw, unformatted CSV text containing electrical grid or sensor data, interpolates missing values, removes extreme outliers, and returns a sanitized JSON array.",
-        "inputSchema": AgentRequest.schema()
-    }
+# Fetch wallet address from environment variables for security
+MY_WALLET_ADDRESS = os.getenv("MY_WALLET_ADDRESS", "0xYourEthereumOrBaseAddressHere")
 
-# --- PHASE 3: THE GATEKEEPER (x402 PAYMENT MIDDLEWARE) ---
-MY_WALLET_ADDRESS = "0x6E1C4B145F8a41B22e6cf03BF615d0D73A9989A1"
-facilitator_client = HTTPFacilitatorClient(url="https://api.cdp.coinbase.com/platform/v2/x402")
+# Initialize client using the required FacilitatorConfig object
+facilitator_client = HTTPFacilitatorClient(
+    config=FacilitatorConfig(url="https://api.cdp.coinbase.com/platform/v2/x402")
+)
 
+# Apply the x402 middleware
 app.add_middleware(
     x402Middleware,
-    routes={"/sanitize-csv": {"accepts": {"scheme": "exact", "price": "0.05", "network": "eip155:8453", "payTo": MY_WALLET_ADDRESS}}},
+    routes={
+        "/sanitize-csv": {
+            "accepts": {
+                "scheme": "exact", 
+                "price": "0.05", 
+                "network": "eip155:8453", 
+                "payTo": MY_WALLET_ADDRESS
+            }
+        }
+    },
     facilitator_client=facilitator_client,
     schemes=[ExactEvmScheme()]
 )
 
-# --- PHASE 1: THE EXECUTION LAYER (CORE LOGIC) ---
 def clean_sensor_data(row):
     sanitized_row = {}
     first_key = list(row.keys())[0]
@@ -69,7 +72,6 @@ async def sanitize_csv(request: AgentRequest):
             
         return {
             "status": "success",
-            "revenue_generated": "$0.05 USDC",
             "records_processed": len(cleaned_data),
             "data": cleaned_data
         }
