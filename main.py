@@ -1,6 +1,7 @@
 import csv
 import io
 import os
+import httpx
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
@@ -35,13 +36,17 @@ class AgentRequest(BaseModel):
 
 MY_WALLET_ADDRESS = os.getenv("MY_WALLET_ADDRESS", "0xYourEthereumOrBaseAddressHere")
 
+custom_client = httpx.AsyncClient(
+    headers={"Authorization": f"Bearer {startup_jwt}"}
+)
+
 # --- 2. Initialize Client and Server ---
 # The SDK automatically discovers CDP_API_KEY_NAME and CDP_API_KEY_PRIVATE_KEY from environment variables
 facilitator_client = HTTPFacilitatorClient(
     config=FacilitatorConfig(
-        url="https://api.cdp.coinbase.com/platform/v2/x402",
-        headers={"Authorization": f"Bearer {startup_jwt}"}
-    )
+        url="https://api.cdp.coinbase.com/platform/v2/x402"
+        ),
+    client=custom_client
 )
 
 # Initialize the ResourceServer and register the scheme here
