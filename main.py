@@ -7,10 +7,23 @@ from pydantic import BaseModel, Field
 # Corrected imports for the modern x402 SDK
 from x402.http.middleware.fastapi import PaymentMiddlewareASGI as x402Middleware
 from x402.mechanisms.evm.exact.server import ExactEvmScheme
+from cdp.auth.utils.jwt import generate_jwt, JwtOptions
 from x402.http import HTTPFacilitatorClient, FacilitatorConfig
 from x402.server import x402ResourceServer
 
 app = FastAPI(title="Agentic Data Sanitizer API")
+# ==========================================
+# PLACE THE NEW JWT GENERATION LOGIC HERE
+# ==========================================
+# 1. Grab keys from the Render environment
+key_name = os.environ.get("CDP_API_KEY_NAME")
+key_secret = os.environ.get("CDP_API_KEY_PRIVATE_KEY")
+
+# 2. Generate the explicit JWT for the startup check
+startup_jwt = generate_jwt(JwtOptions(
+    api_key_id=key_name,
+    api_key_secret=key_secret
+))
 
 # --- 1. Root Health Check Route ---
 @app.get("/")
@@ -26,7 +39,8 @@ MY_WALLET_ADDRESS = os.getenv("MY_WALLET_ADDRESS", "0xYourEthereumOrBaseAddressH
 # The SDK automatically discovers CDP_API_KEY_NAME and CDP_API_KEY_PRIVATE_KEY from environment variables
 facilitator_client = HTTPFacilitatorClient(
     config=FacilitatorConfig(
-        url="https://api.cdp.coinbase.com/platform/v2/x402"
+        url="https://api.cdp.coinbase.com/platform/v2/x402",
+        headers={"Authorization": f"Bearer {startup_jwt}"}
     )
 )
 
