@@ -3,7 +3,7 @@ import io
 import os
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
-
+from fastmcp import FastMCP
 # Core open-source x402 Imports (No proprietary wrappers required)
 from x402.http.middleware.fastapi import PaymentMiddlewareASGI as x402Middleware
 from x402.mechanisms.evm.exact.server import ExactEvmScheme
@@ -62,3 +62,12 @@ async def sanitize_csv(request: AgentRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Data processing error: {str(e)}")
+        # This automatically inspects your FastAPI app and turns your routes into an MCP tool menu
+# --- Add these lines at the very bottom of the file ---
+
+# Instantiates the MCP server and automatically maps your FastAPI routes
+mcp = FastMCP.from_fastapi(app)
+
+if __name__ == "__main__":
+    # Runs the MCP server wrapper when executing this script directly
+    mcp.run()
